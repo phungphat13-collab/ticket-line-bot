@@ -17,55 +17,42 @@ CHANNEL_SECRET = os.getenv('LINE_CHANNEL_SECRET', '')
 def home():
     return "🤖 Bot is running! ✅"
 
-@app.route("/callback", methods=['POST'])
+@app.route("/callback", methods=['POST', 'GET'])
 def callback():
+    if request.method == 'GET':
+        return jsonify({
+            "status": "callback endpoint", 
+            "message": "Use POST for LINE webhook",
+            "channel_secret_set": bool(CHANNEL_SECRET)
+        })
+    
+    # POST request từ LINE
     try:
-        # Get signature từ header
         signature = request.headers.get('X-Line-Signature', '')
-        
-        # Get request body
         body = request.get_data(as_text=True)
-        logger.info(f"📨 Webhook received: {body}")
+        logger.info(f"📨 Webhook received")
         
-        # Verify signature (bảo mật)
-        hash = hmac.new(
-            CHANNEL_SECRET.encode('utf-8'),
-            body.encode('utf-8'),
-            hashlib.sha256
-        ).hexdigest()
+        # Verify signature
+        if CHANNEL_SECRET:
+            hash = hmac.new(
+                CHANNEL_SECRET.encode('utf-8'),
+                body.encode('utf-8'),
+                hashlib.sha256
+            ).hexdigest()
+            
+            if signature != hash:
+                logger.error("❌ Invalid signature")
+                return 'Signature verification failed', 400
         
-        if signature != hash:
-            logger.error("❌ Invalid signature")
-            return 'Signature verification failed', 400
-        
-        # Parse JSON data
+        # Parse và xử lý events
         data = json.loads(body)
+        logger.info(f"✅ Processed {len(data.get('events', []))} events")
         
-        # Xử lý events
-        for event in data.get('events', []):
-            if event.get('type') == 'message':
-                handle_message(event)
-        
-        logger.info("✅ Webhook processed successfully")
         return 'OK'
         
     except Exception as e:
         logger.error(f"❌ Error: {e}")
         return 'Error', 500
-
-def handle_message(event):
-    """Xử lý tin nhắn từ user"""
-    try:
-        user_message = event.get('message', {}).get('text', '')
-        reply_token = event.get('replyToken', '')
-        
-        logger.info(f"💬 Message from user: {user_message}")
-        
-        # Gửi reply (cần implement thêm)
-        # Ở bước này, ít nhất chúng ta biết webhook đang hoạt động
-        
-    except Exception as e:
-        logger.error(f"❌ Error handling message: {e}")
 
 @app.route("/test", methods=['GET'])
 def test():
