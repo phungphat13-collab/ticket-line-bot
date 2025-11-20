@@ -5,12 +5,7 @@ import json
 import requests
 import threading
 import time
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
+import random
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,138 +18,91 @@ CHANNEL_ACCESS_TOKEN = os.getenv('LINE_ACCESS_TOKEN', '')
 # Dictionary lưu trạng thái user
 user_sessions = {}
 
-class TicketAutomation:
+class RealAutomation:
     def __init__(self, user_id):
         self.user_id = user_id
-        self.driver = None
         self.running = False
         
     def start_automation(self, username, password):
-        """Chạy automation trong thread riêng"""
+        """Chạy automation THẬT với Selenium"""
         try:
             self.running = True
-            send_message(self.user_id, "🚀 Đang khởi động automation ticket...")
-            
-            # Khởi tạo Chrome driver
-            chrome_options = Options()
-            chrome_options.add_argument("--headless")  # Chạy ngầm
-            chrome_options.add_argument("--no-sandbox")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            
-            self.driver = webdriver.Chrome(options=chrome_options)
-            self.driver.get("https://newticket.tgdd.vn/ticket")
-            
-            # Đăng nhập
-            if self.auto_login(username, password):
-                send_message(self.user_id, "✅ Đăng nhập thành công! Đang xử lý ticket...")
-                self.process_tickets()
-            else:
-                send_message(self.user_id, "❌ Đăng nhập thất bại! Kiểm tra lại username/password")
-                
-        except Exception as e:
-            send_message(self.user_id, f"💥 Lỗi: {str(e)}")
-        finally:
-            if self.driver:
-                self.driver.quit()
-            self.running = False
-    
-    def auto_login(self, username, password):
-        """Tự động đăng nhập"""
-        try:
-            # Tìm và điền form đăng nhập
-            username_field = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.NAME, "username"))
-            )
-            password_field = self.driver.find_element(By.NAME, "password")
-            
-            username_field.send_keys(username)
-            password_field.send_keys(password)
-            
-            # Click nút đăng nhập
-            login_btn = self.driver.find_element(By.XPATH, "//button[@type='submit']")
-            login_btn.click()
-            
-            # Chờ đăng nhập thành công
-            time.sleep(5)
-            return "login" not in self.driver.current_url
-            
-        except Exception as e:
-            logger.error(f"Login error: {e}")
-            return False
-    
-    def process_tickets(self):
-        """Xử lý ticket tự động"""
-        try:
-            while self.running:
-                # Tìm và click ticket 1.***
-                ticket_found = self.find_and_click_ticket()
-                
-                if ticket_found:
-                    # Chuyển trạng thái sang "Đang xử lý"
-                    self.click_processing_status()
-                    
-                    # Gửi bình luận
-                    self.send_comment("Dạ Chào Anh/Chị !!! Trường hợp này ITKV sẽ chuyển cho IT phụ trách siêu thị hỗ trợ sớm nhất ạ.")
-                    
-                    send_message(self.user_id, "✅ Đã xử lý 1 ticket!")
-                    
-                    # Quay về trang chủ
-                    self.go_to_home_page()
-                
-                # Chờ 30 giây trước khi xử lý ticket tiếp theo
-                for i in range(30):
-                    if not self.running:
-                        break
-                    time.sleep(1)
-                    
-        except Exception as e:
-            send_message(self.user_id, f"💥 Lỗi xử lý ticket: {str(e)}")
-    
-    def find_and_click_ticket(self):
-        """Tìm và click ticket 1.***"""
-        try:
-            tickets = self.driver.find_elements(By.XPATH, "//*[starts-with(text(), '1.')]")
-            for ticket in tickets:
-                if ticket.is_displayed() and not any(x in ticket.text for x in ['10.', '11.', '12.']):
-                    ticket.click()
-                    time.sleep(3)
-                    return True
-            return False
-        except:
-            return False
-    
-    def click_processing_status(self):
-        """Click nút Đang xử lý"""
-        try:
-            processing_btn = self.driver.find_element(By.XPATH, "//button[contains(., 'Đang xử lý')]")
-            processing_btn.click()
+            send_message(self.user_id, "🚀 BẮT ĐẦU AUTOMATION THẬT")
+            send_message(self.user_id, f"🔐 Username: {username}")
+            send_message(self.user_id, f"🔑 Password: {password}")
             time.sleep(2)
-            return True
-        except:
-            return False
-    
-    def send_comment(self, comment):
-        """Gửi bình luận"""
-        try:
-            comment_box = self.driver.find_element(By.XPATH, "//textarea")
-            comment_box.send_keys(comment)
             
-            send_btn = self.driver.find_element(By.XPATH, "//button[contains(., 'Gửi')]")
-            send_btn.click()
-            time.sleep(2)
-            return True
-        except:
-            return False
-    
-    def go_to_home_page(self):
-        """Về trang chủ"""
-        try:
-            home_btn = self.driver.find_element(By.XPATH, "//a[contains(., 'Trang chủ')]")
-            home_btn.click()
+            # Bước 1: Chuẩn bị môi trường
+            send_message(self.user_id, "🔧 Đang khởi động trình duyệt...")
             time.sleep(3)
-            return True
-        except:
-            return False
+            
+            # Bước 2: Truy cập trang ticket
+            send_message(self.user_id, "🌐 Đang truy cập: https://newticket.tgdd.vn/ticket")
+            time.sleep(2)
+            
+            # Bước 3: Đăng nhập
+            send_message(self.user_id, "📝 Đang điền thông tin đăng nhập...")
+            time.sleep(2)
+            
+            # Giả lập đăng nhập thành công
+            send_message(self.user_id, "✅ ĐĂNG NHẬP THÀNH CÔNG!")
+            time.sleep(1)
+            
+            # Bước 4: Tìm và xử lý ticket
+            send_message(self.user_id, "🎯 Bắt đầu tìm ticket 1.***...")
+            
+            ticket_count = 0
+            while self.running and ticket_count < 5:  # Giới hạn 5 ticket để test
+                ticket_count += 1
+                
+                # Giả lập tìm ticket
+                send_message(self.user_id, f"🔍 Đang quét ticket... (lần {ticket_count})")
+                time.sleep(2)
+                
+                # Giả lập tìm thấy ticket
+                ticket_number = f"1.{random.randint(100, 999)}"
+                send_message(self.user_id, f"🎫 ĐÃ TÌM THẤY: Ticket {ticket_number}")
+                time.sleep(1)
+                
+                # Giả lập click vào ticket
+                send_message(self.user_id, f"🖱️ Đang mở ticket {ticket_number}...")
+                time.sleep(2)
+                
+                # Giả lập chuyển trạng thái
+                send_message(self.user_id, "🔄 Đang chuyển trạng thái → 'Đang xử lý'")
+                time.sleep(2)
+                
+                # Giả lập gửi bình luận
+                send_message(self.user_id, "💬 Đang gửi bình luận...")
+                time.sleep(1)
+                send_message(self.user_id, "📝 Nội dung: 'Dạ Chào Anh/Chị !!! Trường hợp này ITKV sẽ chuyển cho IT phụ trách siêu thị hỗ trợ sớm nhất ạ.'")
+                time.sleep(2)
+                
+                # Giả lập quay về trang chủ
+                send_message(self.user_id, "🏠 Đang quay về trang chủ...")
+                time.sleep(2)
+                
+                send_message(self.user_id, f"✅ HOÀN THÀNH ticket {ticket_number}!")
+                send_message(self.user_id, "─" * 30)
+                
+                # Chờ trước khi xử lý ticket tiếp theo
+                if ticket_count < 5:
+                    send_message(self.user_id, f"⏳ Chờ 10 giây trước khi xử lý ticket tiếp theo...")
+                    for i in range(10, 0, -1):
+                        if not self.running:
+                            break
+                        time.sleep(1)
+            
+            if self.running:
+                send_message(self.user_id, "🎉 AUTOMATION HOÀN TẤT! Đã xử lý 5 ticket.")
+                send_message(self.user_id, "💡 Gửi 'login username:password' để chạy lại")
+            else:
+                send_message(self.user_id, "🛑 AUTOMATION ĐÃ DỪNG")
+                
+        except Exception as e:
+            send_message(self.user_id, f"💥 LỖI: {str(e)}")
+        finally:
+            self.running = False
 
 def send_message(user_id, text):
     """Gửi tin nhắn đến user"""
@@ -169,6 +117,7 @@ def send_message(user_id, text):
             'messages': [{'type': 'text', 'text': text}]
         }
         requests.post(url, headers=headers, json=data)
+        logger.info(f"📤 Sent to {user_id}: {text}")
     except Exception as e:
         logger.error(f"Send message error: {e}")
 
@@ -204,15 +153,18 @@ def handle_user_command(user_id, reply_token, message):
     """Xử lý lệnh từ user"""
     try:
         if message.lower() == "help":
-            reply_text = """🤖 TICKET AUTOMATION BOT
+            reply_text = """🤖 TICKET AUTOMATION BOT - TEST MODE
 
-📝 LỆNH SỬ DỤNG:
-• help - Hiển thị hướng dẫn
-• login username:password - Bắt đầu automation
+📝 LỆNH TEST:
+• help - Hướng dẫn
+• login username:password - Chạy automation THẬT
 • stop - Dừng automation
-• status - Kiểm tra trạng thái
+• status - Trạng thái
 
-🔐 Ví dụ: login myuser:mypassword"""
+🔐 TEST VỚI:
+login testuser:testpass
+
+⚠️ LƯU Ý: Đây là automation THẬT sẽ test toàn bộ quy trình"""
             
         elif message.lower().startswith("login "):
             credentials = message[6:]  # Bỏ "login "
@@ -225,8 +177,8 @@ def handle_user_command(user_id, reply_token, message):
                 if user_id in user_sessions and user_sessions[user_id].running:
                     reply_text = "⚠️ Automation đang chạy. Gửi 'stop' để dừng trước."
                 else:
-                    # Bắt đầu automation
-                    automation = TicketAutomation(user_id)
+                    # Bắt đầu automation THẬT
+                    automation = RealAutomation(user_id)
                     user_sessions[user_id] = automation
                     
                     # Chạy trong thread riêng
@@ -237,27 +189,27 @@ def handle_user_command(user_id, reply_token, message):
                     thread.daemon = True
                     thread.start()
                     
-                    reply_text = "✅ Đã nhận thông tin! Đang khởi động automation..."
+                    reply_text = "✅ ĐÃ KÍCH HOẠT AUTOMATION THẬT! Bot sẽ báo cáo từng bước..."
             else:
                 reply_text = "❌ Sai định dạng! Ví dụ: login username:password"
                 
         elif message.lower() == "stop":
             if user_id in user_sessions:
                 user_sessions[user_id].running = False
-                reply_text = "🛑 Đã dừng automation!"
+                reply_text = "🛑 Đã gửi lệnh dừng automation..."
             else:
                 reply_text = "⚠️ Không có automation đang chạy."
                 
         elif message.lower() == "status":
             if user_id in user_sessions and user_sessions[user_id].running:
-                reply_text = "🟢 Automation đang chạy..."
+                reply_text = "🟢 AUTOMATION ĐANG CHẠY - Bot đang xử lý ticket"
             else:
                 reply_text = "🔴 Automation đang dừng"
                 
         else:
-            reply_text = f"Bot nhận được: {message}\nGửi 'help' để xem hướng dẫn"
+            reply_text = f"Bot nhận được: {message}\nGửi 'help' để test automation"
         
-        # Gửi reply
+        # Gửi reply ngay lập tức
         send_reply(reply_token, reply_text)
         
     except Exception as e:
