@@ -11,7 +11,7 @@ app = Flask(__name__)
 
 CHANNEL_ACCESS_TOKEN = os.getenv('LINE_ACCESS_TOKEN', '')
 # URL của máy tính bạn (cần public IP hoặc dùng ngrok)
-YOUR_COMPUTER_URL = "http://your-computer-ip:5002"  # Thay bằng IP thật
+YOUR_COMPUTER_URL = "https://condonable-insuperable-cathie.ngrok-free.dev"  # Thay bằng IP thật
 
 @app.route("/")
 def home():
